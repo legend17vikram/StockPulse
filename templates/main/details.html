@@ -1,0 +1,448 @@
+{% extends base_template %}
+
+{% block dashboard %}
+
+{% load static %}
+
+<script>
+    function fetchData() {
+        var watchquery = "{{query}}";
+        fetch(`/api/holdings/${watchquery}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(data);
+                const currentlyholding = document.getElementById("currentlyholding");
+                if (currentlyholding) {
+                    currentlyholding.innerHTML = data.quantity || 0;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching holdings data:', error);
+                const errorElement = document.getElementById("holdings-error");
+                if (errorElement) {
+                    errorElement.textContent = "Failed to load holdings data";
+                    errorElement.classList.remove("hidden");
+                }
+            });
+    }
+
+    fetchData();
+    const intervalId = setInterval(fetchData, 5000);
+</script>
+
+<div class="space-y-6">
+    <!-- Funds Warning Popup -->
+    <div id="funds-warning-modal" class="hidden fixed inset-0 bg-slate-950/80 overflow-y-auto h-full w-full z-50 transition-opacity duration-300 ease-in-out">
+        <div class="relative top-20 mx-auto p-5 border border-slate-700 w-96 shadow-xl rounded-xl bg-slate-800">
+            <div class="mt-3 text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-amber-950 border border-amber-700">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-400 text-lg"></i>
+                </div>
+                <h3 class="text-lg leading-6 font-bold text-white mt-3">Trade Warning</h3>
+                <div class="mt-2 px-4 py-2">
+                    <p class="text-sm text-slate-300" id="funds-warning-text"></p>
+                </div>
+                <div class="items-center px-4 py-3">
+                    <button id="funds-warning-ok-btn"
+                            class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-lg w-full transition">
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-6 items-start w-full">
+        {% if not is_embedded %}
+        <!-- Chart Section -->
+        <div class="flex-1 w-full bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-lg h-[460px] flex flex-col justify-between">
+            <div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-800">
+                <div>
+                    <h5 id="currentPrice" class="leading-none text-2xl font-bold text-white mb-1">Current Price:</h5>
+                    <p class="text-xs text-slate-400">Price Chart (5m intervals)</p>
+                </div>
+                <div class="text-right">
+                    <h5 id="previousPrice" class="leading-none text-sm font-semibold text-slate-400 mb-1">Previous Close: ${{previousclose}}</h5>
+                    <div id="changePercentage" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold text-emerald-400 bg-emerald-950/20">
+                        %
+                    </div>
+                </div>
+            </div>
+            <div class="flex-grow relative h-full">
+                <div id="labels-chart" class="w-full h-full"></div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Sidebar Controls & Fundamentals Section -->
+        <div class="w-full {% if not is_embedded %}lg:w-[400px]{% endif %} space-y-6 flex flex-col justify-between">
+            
+            <!-- Watchlist Toggle & Info Card -->
+            <div class="p-6 bg-slate-900 border border-slate-800 rounded-xl shadow-lg space-y-4">
+                <div class="flex justify-between items-center">
+                    <h5 class="text-lg font-bold text-white flex items-center">
+                        <i class="fa-solid fa-gem text-cyan-400 me-2"></i>
+                        {{ query }}
+                    </h5>
+                    <button type="button" name="addtowatchlist" onclick="addwatchlist()"
+                        class="text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 px-3 py-2 rounded-lg transition duration-150">
+                        <i class="fa-solid fa-plus me-1.5"></i>Watchlist
+                    </button>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-slate-950 rounded-lg border border-slate-850">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Current Holdings</span>
+                    <span id="currentlyholding" class="text-sm font-bold text-white">0</span>
+                </div>
+            </div>
+
+            <!-- Order Entry Form -->
+            <div class="p-6 bg-slate-900 border border-slate-800 rounded-xl shadow-lg">
+                <h6 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4 flex items-center">
+                    <i class="fa-solid fa-wallet text-purple-400 me-2"></i>
+                    Execute Order
+                </h6>
+                <form id="updatestocksform" action="{% url 'updatestocks' %}" method="post" class="space-y-4" {% if is_embedded %}target="_top"{% endif %}>
+                    {% csrf_token %}
+                    <input type="text" id="symbolname" name="symbolname" class="hidden" value="{{query}}">
+                    <input type="text" id="currentprice" name="currentprice" class="hidden" value="">
+                    
+                    <div>
+                        <label for="quantity-input" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Order Quantity</label>
+                        <div class="flex items-center space-x-1.5 max-w-[12rem] bg-slate-950 p-1.5 rounded-lg border border-slate-800">
+                            <button type="button" id="decrement-button" class="w-8 h-8 rounded bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition">
+                                <i class="fa-solid fa-minus text-xs"></i>
+                            </button>
+                            <input type="text" id="quantity-input" name="quantity-input" required value="0"
+                                class="block w-full border-none bg-transparent text-center text-sm font-bold text-white focus:ring-0 focus:outline-none p-0">
+                            <button type="button" id="increment-button" class="w-8 h-8 rounded bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition">
+                                <i class="fa-solid fa-plus text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-slate-950 rounded-lg border border-slate-850">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-slate-400 font-semibold">Estimated Cost:</span>
+                            <span class="font-bold text-white">$<span id="estimated-cost">0.00</span></span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-2">
+                        <button type="submit" name="buy" value="buy" class="py-2.5 text-sm font-semibold rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 transition disabled:opacity-50">
+                            Buy Shares
+                        </button>
+                        <button type="submit" name="sell" value="sell" class="py-2.5 text-sm font-semibold rounded-lg text-white bg-rose-600 hover:bg-rose-700 transition disabled:opacity-50">
+                            Sell Shares
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Key Statistics Fundamentals Card -->
+            <div class="p-6 bg-slate-900 border border-slate-800 rounded-xl shadow-lg overflow-hidden">
+                <h6 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 flex items-center">
+                    <i class="fa-solid fa-list-check text-cyan-400 me-2"></i>
+                    Key Statistics
+                </h6>
+                <div class="rounded-lg border border-slate-800 overflow-hidden text-xs">
+                    <table class="w-full text-left">
+                        <tbody>
+                            {% for key, value in data.items %}
+                            <tr class="border-b border-slate-800 hover:bg-slate-800/20 transition">
+                                <th scope="row" class="px-4 py-2.5 font-semibold text-slate-400 bg-slate-950 w-1/2">
+                                    {{key}}
+                                </th>
+                                <td class="px-4 py-2.5 text-white font-medium">
+                                    {{value}}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function fetchLiveData() {
+        var watchquery = "{{query}}";
+        fetch(`/api/watchlist/${watchquery}`)
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                var currentPriceElement = document.getElementById('currentPrice');
+                var changepercentage = document.getElementById('changePercentage');
+                var currentPriceInput = document.getElementById('currentprice');
+
+                if (data && data.stocks && data.stocks.length > 0) {
+                    var stockData = data.stocks[0];
+                    var currentPrice = stockData[1];
+                    var changeper = stockData[2];
+
+                    if (currentPriceElement) {
+                        currentPriceElement.textContent = "Current Price: $" + parseFloat(currentPrice).toFixed(2);
+                    }
+                    if (currentPriceInput) {
+                        currentPriceInput.value = currentPrice;
+                    }
+                    if (changepercentage) {
+                        changepercentage.classList.remove('text-emerald-400', 'bg-emerald-950/20', 'text-rose-500', 'bg-rose-950/20');
+                        if (changeper > 0) {
+                            changepercentage.classList.add('text-emerald-400', 'bg-emerald-950/20');
+                            changepercentage.innerHTML = `<i class="fa-solid fa-arrow-trend-up me-1"></i>${changeper}%`;
+                        } else {
+                            changepercentage.classList.add('text-rose-500', 'bg-rose-950/20');
+                            changepercentage.innerHTML = `<i class="fa-solid fa-arrow-trend-down me-1"></i>${changeper}%`;
+                        }
+                    }
+                }
+            })
+            .catch(error => console.error('Error fetching live pricing details:', error));
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchLiveData();
+        setInterval(fetchLiveData, 5000);
+    });
+</script>
+
+<script>
+    function addwatchlist(){
+        var watchquery = "{{query}}";
+        fetch(`/api/addtowatchlist/${watchquery}`)
+            .then(response => {
+                if(!response.ok) throw new Error("Network response was not ok");
+                return response.json();
+            })
+            .then(data => {
+                var modal = document.getElementById("funds-warning-modal");
+                var modalText = document.getElementById("funds-warning-text");
+                
+                if(data["response"] == "Already Exists") {
+                    modalText.textContent = "This stock ticker is already present in your watchlist.";
+                } else {
+                    modalText.textContent = "The stock ticker was successfully added to your watchlist.";
+                }
+                modal.classList.remove('hidden');
+            })
+            .catch(error => console.error('Error adding stock to watchlist:', error));
+    }
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    let userBalance = 0;
+    let currentStockPrice = 0;
+    let userHoldings = {};
+
+    async function fetchUserBalance() {
+        try {
+            const response = await fetch('/api/userbalance');
+            if (!response.ok) throw new Error('Network response was not ok');
+            const data = await response.json();
+            userBalance = data.balance;
+            userHoldings = data.stockbuy || {};
+        } catch (error) {
+            console.error('Error fetching balance logs:', error);
+        }
+    }
+
+    function updateEstimatedCost() {
+        const quantityInput = document.getElementById('quantity-input');
+        const estimatedCostElement = document.getElementById('estimated-cost');
+        const buyButton = document.querySelector('button[name="buy"]');
+
+        if (!quantityInput || !estimatedCostElement || !buyButton) return;
+
+        const quantity = parseInt(quantityInput.value) || 0;
+        const estimatedCost = quantity * currentStockPrice;
+        estimatedCostElement.textContent = estimatedCost.toFixed(2);
+        buyButton.disabled = quantity <= 0;
+    }
+
+    function fetchData() {
+        const watchquery = "{{query}}";
+        fetch(`/api/watchlist/${watchquery}`)
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                const currentPriceElement = document.getElementById('currentPrice');
+                const changePercentage = document.getElementById('changePercentage');
+                const currentPriceInput = document.getElementById("currentprice");
+
+                if (!currentPriceElement || !changePercentage || !currentPriceInput) return;
+
+                const stocks = data.stocks;
+                if (stocks && stocks.length > 0) {
+                    currentStockPrice = stocks[0][1];
+                    currentPriceElement.textContent = "Current Price: $" + parseFloat(currentStockPrice).toFixed(2);
+                    currentPriceInput.value = currentStockPrice;
+
+                    const changeper = stocks[0][2];
+                    changePercentage.classList.remove('text-emerald-400', 'bg-emerald-950/20', 'text-rose-500', 'bg-rose-950/20');
+                    if (changeper > 0) {
+                        changePercentage.classList.add('text-emerald-400', 'bg-emerald-950/20');
+                        changePercentage.innerHTML = `<i class="fa-solid fa-arrow-trend-up me-1"></i>${changeper}%`;
+                    } else {
+                        changePercentage.classList.add('text-rose-500', 'bg-rose-950/20');
+                        changePercentage.innerHTML = `<i class="fa-solid fa-arrow-trend-down me-1"></i>${changeper}%`;
+                    }
+
+                    updateEstimatedCost();
+                }
+            })
+            .catch(error => console.error('Fetch errors:', error));
+    }
+
+    fetchUserBalance();
+    fetchData();
+    setInterval(fetchData, 5000);
+
+    const quantityInput = document.getElementById('quantity-input');
+    const incrementButton = document.getElementById('increment-button');
+    const decrementButton = document.getElementById('decrement-button');
+    const warningModal = document.getElementById('funds-warning-modal');
+    const warningText = document.getElementById('funds-warning-text');
+    const warningOkBtn = document.getElementById('funds-warning-ok-btn');
+    const buyButton = document.querySelector('button[name="buy"]');
+    const sellButton = document.querySelector('button[name="sell"]');
+    const updateStocksForm = document.getElementById('updatestocksform');
+
+    if (quantityInput && incrementButton && decrementButton && warningModal && warningText && warningOkBtn && buyButton && sellButton && updateStocksForm) {
+        quantityInput.addEventListener('input', updateEstimatedCost);
+
+        incrementButton.addEventListener('click', () => {
+            quantityInput.value = (parseInt(quantityInput.value) || 0) + 1;
+            updateEstimatedCost();
+        });
+
+        decrementButton.addEventListener('click', () => {
+            quantityInput.value = Math.max(0, (parseInt(quantityInput.value) || 0) - 1);
+            updateEstimatedCost();
+        });
+
+        warningOkBtn.addEventListener('click', () => {
+            warningModal.classList.add('hidden');
+        });
+
+        updateStocksForm.addEventListener('submit', function (e) {
+            const quantity = parseInt(quantityInput.value) || 0;
+            const totalCost = quantity * currentStockPrice;
+            const stockName = "{{query}}";
+
+            if (document.activeElement.name === "buy") {
+                if (totalCost > userBalance) {
+                    e.preventDefault();
+                    warningText.textContent = `This order requires $${totalCost.toFixed(2)} but you only have $${userBalance.toFixed(2)} available.`;
+                    warningModal.classList.remove('hidden');
+                    return false;
+                } else if (totalCost > userBalance * 0.9) {
+                    warningText.textContent = `This order will utilize $${totalCost.toFixed(2)} of your $${userBalance.toFixed(2)} total balance.`;
+                    warningModal.classList.remove('hidden');
+                }
+            } else if (document.activeElement.name === "sell") {
+                const stockInfo = userHoldings[stockName];
+                const userQtyHeld = stockInfo?.quantity || 0;
+
+                if (quantity > userQtyHeld) {
+                    e.preventDefault();
+                    warningText.textContent = `You are attempting to sell ${quantity} shares, but you only own ${userQtyHeld}.`;
+                    warningModal.classList.remove('hidden');
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    }
+
+    const start = "{{start|escapejs}}";
+    const end = "{{end|escapejs}}";
+
+    fetch(`/api/graphdata/{{query}}/${start}/${end}`)
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(data => {
+            if (!data || !data.date || !data.close) return;
+            const options = {
+                xaxis: {
+                    categories: data.date,
+                    labels: {
+                        show: true,
+                        style: {
+                            fontFamily: "Inter, sans-serif",
+                            colors: '#94a3b8'
+                        }
+                    },
+                    axisBorder: { show: false },
+                    axisTicks: { show: false },
+                    tickAmount: Math.ceil(data.date.length / 50),
+                },
+                yaxis: {
+                    labels: {
+                        show: true,
+                        style: {
+                            fontFamily: "Inter, sans-serif",
+                            colors: '#94a3b8'
+                        },
+                        formatter: value => '$ ' + value.toFixed(2)
+                    }
+                },
+                series: [{
+                    name: "Close Price",
+                    data: data.close,
+                }],
+                colors: ["#d97706"],
+                chart: {
+                    height: "100%",
+                    width: "100%",
+                    type: "area",
+                    fontFamily: "Inter, sans-serif",
+                    dropShadow: { enabled: false },
+                    toolbar: { show: false },
+                },
+                tooltip: {
+                    enabled: true,
+                    x: { show: false },
+                    theme: 'dark'
+                },
+                fill: {
+                    type: "gradient",
+                    gradient: {
+                        opacityFrom: 0.45,
+                        opacityTo: 0.05,
+                        shade: "#d97706",
+                        gradientToColors: ["#eab308"],
+                    },
+                },
+                dataLabels: { enabled: false },
+                stroke: { width: 4 },
+                legend: { show: false },
+                grid: { show: true, borderColor: '#1e293b' },
+            };
+
+            const chartContainer = document.getElementById("labels-chart");
+            if (chartContainer && typeof ApexCharts !== 'undefined') {
+                const chart = new ApexCharts(chartContainer, options);
+                chart.render();
+            }
+        })
+        .catch(error => console.error('Chart Load Error:', error));
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,484 @@
+{% extends 'main/dashboardbase.html' %}
+
+{% block dashboard %}
+
+<script>
+    console.log("Allocation Script Loaded");
+    document.addEventListener('DOMContentLoaded', function () {
+        fetch(`/api/portfoliochart`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const getChartOptions = () => {
+                    return {
+                        series: data.price,
+                        colors: ["#d97706", "#eab308", "#10b981", "#3b82f6", "#ec4899", "#6b7280"],
+                        chart: {
+                            height: 320,
+                            width: "100%",
+                            type: "donut",
+                        },
+                        stroke: {
+                            colors: ["transparent"],
+                            lineCap: "",
+                        },
+                        plotOptions: {
+                            pie: {
+                                donut: {
+                                    labels: {
+                                        show: true,
+                                        name: {
+                                            show: true,
+                                            fontFamily: "Inter, sans-serif",
+                                            offsetY: 20,
+                                        },
+                                        total: {
+                                            showAlways: true,
+                                            show: true,
+                                            label: "Total Investment",
+                                            fontFamily: "Inter, sans-serif",
+                                            formatter: function (w) {
+                                                const sum = w.globals.seriesTotals.reduce((a, b) => {
+                                                    return a + b
+                                                }, 0)
+                                                return '$' + sum
+                                            },
+                                        },
+                                        value: {
+                                            show: true,
+                                            fontFamily: "Inter, sans-serif",
+                                            offsetY: -20,
+                                            formatter: function (value) {
+                                                return value
+                                            },
+                                        },
+                                    },
+                                    size: "80%",
+                                },
+                            },
+                        },
+                        grid: {
+                            padding: {
+                                top: -2,
+                            },
+                        },
+                        labels: data.name,
+                        dataLabels: {
+                            enabled: false,
+                        },
+                        legend: {
+                            position: "bottom",
+                            fontFamily: "Inter, sans-serif",
+                        },
+                        yaxis: {
+                            labels: {
+                                formatter: function (value) {
+                                    return value
+                                },
+                            },
+                        },
+                        xaxis: {
+                            labels: {
+                                formatter: function (value) {
+                                    return value
+                                },
+                            },
+                            axisTicks: {
+                                show: false,
+                            },
+                            axisBorder: {
+                                show: false,
+                            },
+                        },
+                    }
+                }
+
+                const labels = data.name || [];
+                const series = data.price || [];
+                console.log("Labels:", labels);
+                console.log("Series:", series);
+                console.log(document.getElementById("donut-chart"));
+                
+                if (!series || series.length === 0) {
+                    console.log("Portfolio has no holdings. Displaying empty state for Allocation Donut Chart.");
+                    const container = document.getElementById("donut-chart");
+                    if (container) {
+                        container.innerHTML = `
+                            <div class="text-slate-500 text-sm font-semibold flex flex-col items-center justify-center py-12">
+                                <i class="fa-solid fa-chart-pie text-3xl mb-2 text-slate-600"></i>
+                                <span>No allocations to display.</span>
+                            </div>
+                        `;
+                    }
+                    return;
+                }
+
+                if (document.getElementById("donut-chart") && typeof ApexCharts !== 'undefined') {
+                    const chart = new ApexCharts(document.getElementById("donut-chart"), getChartOptions());
+                    console.log("Rendering Donut Chart...");
+                    chart.render();
+                    console.log("Donut chart rendered successfully");
+                } else {
+                    console.warn("Donut Chart render skipped: element missing or ApexCharts undefined.", {
+                        element: document.getElementById("donut-chart"),
+                        ApexCharts: typeof ApexCharts
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+            });
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        fetch(`/api/portfolio`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const tableBody = document.getElementById('stock-table-body');
+
+                data.forEach(stock => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-slate-800/40 transition duration-150';
+
+                    // Symbol
+                    const symbolCell = document.createElement('th');
+                    symbolCell.className = 'px-6 py-4 font-semibold text-white whitespace-nowrap';
+                    symbolCell.textContent = stock.symbol;
+
+                    // Count (Quantity)
+                    const quantityCell = document.createElement('td');
+                    quantityCell.className = 'px-6 py-4 text-slate-200';
+                    quantityCell.textContent = stock.quantity;
+
+                    // Average Price
+                    const averagePriceCell = document.createElement('td');
+                    averagePriceCell.className = 'px-6 py-4 text-slate-200';
+                    averagePriceCell.textContent = '$' + parseFloat(stock.averageprice).toFixed(2);
+
+                    // Current Price
+                    const currentPriceCell = document.createElement('td');
+                    currentPriceCell.className = 'px-6 py-4 text-slate-200';
+                    currentPriceCell.textContent = '$' + parseFloat(stock.currentprice).toFixed(2);
+
+                    // Percent Change
+                    const diff = ((parseFloat(stock.currentprice) - parseFloat(stock.averageprice)) / parseFloat(stock.averageprice)) * 100;
+                    const percentChangeCell = document.createElement('td');
+                    percentChangeCell.className = 'px-6 py-4 font-semibold';
+                    
+                    if (diff > 0) {
+                        percentChangeCell.className += ' text-emerald-400';
+                        percentChangeCell.innerHTML = `<i class="fa-solid fa-arrow-trend-up me-1"></i>${diff.toFixed(2)}%`;
+                    } else if (diff < 0) {
+                        percentChangeCell.className += ' text-rose-500';
+                        percentChangeCell.innerHTML = `<i class="fa-solid fa-arrow-trend-down me-1"></i>${diff.toFixed(2)}%`;
+                    } else {
+                        percentChangeCell.className += ' text-slate-400';
+                        percentChangeCell.textContent = '0.00%';
+                    }
+
+                    // Edit Action
+                    const actionsCell = document.createElement('td');
+                    actionsCell.className = 'px-6 py-4';
+                    const editLink = document.createElement('a');
+                    editLink.href = 'details/' + stock.symbol;
+                    editLink.className = 'inline-flex items-center text-cyan-400 hover:text-cyan-300 font-semibold transition';
+                    editLink.innerHTML = `<i class="fa-solid fa-pen-to-square me-1.5"></i>Trade`;
+                    actionsCell.appendChild(editLink);
+
+                    row.appendChild(symbolCell);
+                    row.appendChild(quantityCell);
+                    row.appendChild(averagePriceCell);
+                    row.appendChild(currentPriceCell);
+                    row.appendChild(percentChangeCell);
+                    row.appendChild(actionsCell);
+
+                    tableBody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+            });
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async function () {
+        // Array of stock symbols to fetch data for
+        const symbols = {{ stock|safe }};
+        const start = "{{start|escapejs}}";
+        const end = "{{end|escapejs}}";
+
+        console.log("[Portfolio Performance] Initializing performance chart. Symbols:", symbols, "Start:", start, "End:", end);
+
+        if (!symbols || symbols.length === 0) {
+            console.log("[Portfolio Performance] Portfolio is empty. Displaying fallback message.");
+            const container = document.getElementById("labels-chart");
+            if (container) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center text-slate-400 text-sm h-full w-full py-12">
+                        <i class="fa-solid fa-chart-line text-3xl mb-2 text-slate-500"></i>
+                        <span>Not enough portfolio history to display performance.</span>
+                    </div>
+                `;
+            }
+            return;
+        }
+
+        // Function to fetch data for each symbol and combine it
+        const fetchDataForSymbols = async () => {
+            console.log("[Portfolio Performance] Fetching graph data for symbols:", symbols);
+            const promises = symbols.map(symbol => {
+                return fetch(`/api/graphdata/${symbol}/${start}/${end}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Failed to fetch ${symbol}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.error || !data.date || !data.close) {
+                            throw new Error(`Invalid data structure for ${symbol}`);
+                        }
+                        console.log(`[Portfolio Performance] Received API data for ${symbol}:`, data.close.length, "points");
+                        return {
+                            symbol: symbol,
+                            data: data
+                        };
+                    })
+                    .catch(err => {
+                        console.warn(`[Portfolio Performance] Error loading ${symbol}:`, err);
+                        return null; // Resolve as null to allow other symbols to render
+                    });
+            });
+
+            const results = (await Promise.all(promises)).filter(r => r !== null);
+            console.log("[Portfolio Performance] All promises resolved. Valid results count:", results.length);
+
+            if (results.length === 0) {
+                return null;
+            }
+
+            // Find the result with the longest history to align dates
+            let longestResult = results[0];
+            for (let i = 1; i < results.length; i++) {
+                if (results[i].data.date.length > longestResult.data.date.length) {
+                    longestResult = results[i];
+                }
+            }
+
+            const combinedData = {
+                date: longestResult.data.date
+            };
+
+            const targetLength = combinedData.date.length;
+            results.forEach(({ symbol, data }) => {
+                let closeArray = data.close;
+                if (closeArray.length < targetLength) {
+                    const diff = targetLength - closeArray.length;
+                    const padding = new Array(diff).fill(closeArray[0] || 0);
+                    closeArray = padding.concat(closeArray);
+                } else if (closeArray.length > targetLength) {
+                    closeArray = closeArray.slice(0, targetLength);
+                }
+                combinedData[symbol] = closeArray;
+            });
+
+            return combinedData;
+        };
+
+        try {
+            const combinedData = await fetchDataForSymbols();
+            console.log("[Portfolio Performance] Combined data output:", combinedData);
+
+            if (!combinedData || !combinedData.date || combinedData.date.length === 0) {
+                console.log("[Portfolio Performance] No combined data available. Displaying fallback message.");
+                const container = document.getElementById("labels-chart");
+                if (container) {
+                    container.innerHTML = `
+                        <div class="flex flex-col items-center justify-center text-slate-400 text-sm h-full w-full py-12">
+                            <i class="fa-solid fa-chart-line text-3xl mb-2 text-slate-500"></i>
+                            <span>Not enough portfolio history to display performance.</span>
+                        </div>
+                    `;
+                }
+                return;
+            }
+
+            let options = {
+                xaxis: {
+                    categories: combinedData.date,
+                    labels: {
+                        show: true,
+                        style: {
+                            fontFamily: "Inter, sans-serif",
+                            colors: '#94a3b8'
+                        }
+                    },
+                    axisBorder: { show: false },
+                    axisTicks: { show: false },
+                    tickAmount: Math.ceil(combinedData.date.length / 50),
+                },
+                yaxis: {
+                    show: true,
+                    labels: {
+                        show: true,
+                        style: {
+                            fontFamily: "Inter, sans-serif",
+                            colors: '#94a3b8'
+                        },
+                        formatter: function (value) {
+                            return '$' + parseFloat(value).toFixed(2);
+                        }
+                    }
+                },
+                series: symbols.map(symbol => {
+                    return {
+                        name: symbol,
+                        data: combinedData[symbol] || []
+                    };
+                }),
+                colors: ["#d97706", "#eab308", "#10b981", "#3b82f6", "#ec4899", "#6b7280"],
+                chart: {
+                    height: 320,
+                    width: "100%",
+                    type: "area",
+                    fontFamily: "Inter, sans-serif",
+                    dropShadow: { enabled: false },
+                    toolbar: { show: false },
+                },
+                tooltip: {
+                    enabled: true,
+                    x: { show: false },
+                    theme: 'dark'
+                },
+                fill: {
+                    type: "gradient",
+                    gradient: {
+                        opacityFrom: 0.45,
+                        opacityTo: 0.05,
+                        shade: "#d97706",
+                        gradientToColors: ["#eab308"],
+                    },
+                },
+                dataLabels: { enabled: false },
+                stroke: { width: 4 },
+                legend: { show: true, labels: { colors: '#94a3b8' } },
+                grid: { show: true, borderColor: '#1e293b' },
+            };
+
+            const chartContainer = document.getElementById("labels-chart");
+            if (chartContainer && typeof ApexCharts !== 'undefined') {
+                console.log("[Portfolio Performance] Creating chart instance...");
+                const chart = new ApexCharts(chartContainer, options);
+                console.log("[Portfolio Performance] Rendering chart...");
+                chart.render();
+                console.log("[Portfolio Performance] Chart render complete.");
+            } else {
+                console.warn("[Portfolio Performance] Render skipped: labels-chart missing or ApexCharts undefined.");
+            }
+        } catch (error) {
+            console.error('[Portfolio Performance] Error in main render chain:', error);
+            const container = document.getElementById("labels-chart");
+            if (container) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center text-red-400 text-sm h-full w-full py-12">
+                        <i class="fa-solid fa-triangle-exclamation text-3xl mb-2 text-red-500"></i>
+                        <span>Failed to load performance chart.</span>
+                    </div>
+                `;
+            }
+        }
+    });
+</script>
+
+<style>
+  .hide-scrollbar::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+</style>
+
+<div class="space-y-6">
+  <!-- Chart Overview Section -->
+  <div class="flex flex-col h-[400px] w-full rounded-xl bg-slate-900 border border-slate-800 shadow-lg overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+      <div>
+        <h5 class="text-sm font-bold tracking-wider uppercase text-slate-300 flex items-center">
+            <i class="fa-solid fa-chart-area text-purple-400 me-2"></i>
+            Portfolio Performance
+        </h5>
+      </div>
+      <div class="flex items-center px-2.5 py-0.5 text-sm font-bold text-emerald-400 text-center">
+        <i class="fa-solid fa-arrow-trend-up me-1.5"></i>
+        <span>23%</span>
+      </div>
+    </div>
+    <div class="flex-grow p-4 bg-slate-900">
+      <div id="labels-chart" class="w-full h-full"></div>
+    </div>
+  </div>
+
+  <!-- Row 2: Portfolio + Assets Allocation -->
+  <div class="flex flex-col lg:flex-row gap-6 w-full">
+    
+    <!-- Portfolio -->
+    <div class="flex flex-col h-[400px] rounded-xl bg-slate-900 border border-slate-800 overflow-hidden shadow-lg flex-1">
+      <div class="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+        <h5 class="text-sm font-bold tracking-wider uppercase text-slate-300 flex items-center">
+            <i class="fa-solid fa-briefcase text-purple-400 me-2"></i>
+            Assets Summary
+        </h5>
+      </div>
+      <div class="flex-grow overflow-y-auto p-4 hide-scrollbar">
+        <div class="h-full overflow-y-auto hide-scrollbar rounded-lg border border-slate-800">
+          <table class="w-full text-sm text-left">
+            <thead class="text-xs text-slate-400 uppercase bg-slate-950">
+              <tr>
+                <th class="px-6 py-3">Symbol</th>
+                <th class="px-5 py-3">Shares</th>
+                <th class="px-5 py-3">Avg Cost</th>
+                <th class="px-5 py-3">Current Value</th>
+                <th class="px-5 py-3">Return</th>
+                <th class="px-5 py-3">Action</th>
+              </tr>
+            </thead>
+            <tbody id="stock-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Donut Chart -->
+    <div class="flex flex-col h-[400px] rounded-xl bg-slate-900 border border-slate-800 shadow-lg overflow-hidden lg:w-[450px]">
+      <div class="px-6 py-4 border-b border-slate-800 bg-slate-950">
+        <h5 class="text-sm font-bold tracking-wider uppercase text-slate-300 flex items-center">
+            <i class="fa-solid fa-chart-pie text-cyan-400 me-2"></i>
+            Allocation
+        </h5>
+      </div>
+      <div class="flex-grow flex items-center justify-center p-4 bg-slate-900" id="donut-chart">
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+
+
+{% endblock %}

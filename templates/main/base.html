@@ -1,0 +1,151 @@
+<!doctype html>
+<html class="no-js" lang="en">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StockPulse | {{title}}</title>
+    <link rel="shortcut icon" type="image/jpg" href="https://flowbite.com/docs/images/logo.svg" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.css" rel="stylesheet" />
+    <script>
+      // On page load or when changing themes, best to add inline in `head` to avoid FOUC
+      if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
+      document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('search-navbar');
+
+        if (searchInput) {
+          searchInput.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+              // Retrieve the search term
+              const searchTerm = searchInput.value.trim();
+
+              // Perform your desired action, e.g., redirect to a search results page
+              if (searchTerm) {
+                window.location.href = `/search/${encodeURIComponent(searchTerm)}`;
+              }
+            }
+          });
+        }
+      });
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+      :root {
+        --sidebar-bg: #09090b;
+        --bg-slate: #121214;
+        --card-bg: #1c1c1e;
+        --purple-primary: #d97706;
+        --purple-hover: #b45309;
+        --cyan-secondary: #eab308;
+        --green-profit: #10b981;
+        --red-loss: #f43f5e;
+      }
+      body {
+        font-family: 'Inter', sans-serif !important;
+        background-color: var(--bg-slate) !important;
+        color: #f1f5f9 !important;
+      }
+      /* Sidebar specific */
+      aside, #logo-sidebar {
+        background-color: var(--sidebar-bg) !important;
+        border-right: 1px solid #27272a !important;
+      }
+      /* Cards and containers */
+      .bg-white, .bg-gray-50, .dark\:bg-gray-800, .bg-gray-900, .dark\:bg-gray-900, .block, .rounded-lg, .shadow {
+        background-color: var(--card-bg) !important;
+        border-color: #2e2e33 !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+      }
+      /* Hover transitions */
+      .hover\:bg-gray-100:hover, .dark\:hover\:bg-gray-700:hover, .hover\:bg-gray-700:hover {
+        background-color: #27272a !important;
+      }
+      /* Navigation bar */
+      nav {
+        background-color: var(--bg-slate) !important;
+        border-bottom: 1px solid #27272a !important;
+      }
+      /* Tables */
+      table {
+        background-color: var(--card-bg) !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
+        border: 1px solid #2e2e33 !important;
+      }
+      tr {
+        background-color: var(--card-bg) !important;
+      }
+      tr, td, th {
+        border-bottom: 1px solid #2e2e33 !important;
+        border-color: #2e2e33 !important;
+      }
+      /* Headings, labels, and text colors */
+      h1, h2, h3, h4, h5, h6, th {
+        color: #ffffff !important;
+        font-family: 'Inter', sans-serif !important;
+        font-weight: 600 !important;
+      }
+      label, td, p, span, li {
+        color: #cbd5e1 !important;
+        font-family: 'Inter', sans-serif !important;
+      }
+      /* Interactive Links */
+      a {
+        color: var(--cyan-secondary) !important;
+        transition: color 0.2s ease-in-out !important;
+        text-decoration: none !important;
+      }
+      a:hover {
+        color: #facc15 !important;
+      }
+      /* Inputs */
+      input, select, textarea {
+        background-color: #09090b !important;
+        color: #ffffff !important;
+        border: 1px solid #2e2e33 !important;
+        border-radius: 8px !important;
+        padding: 0.625rem 1rem !important;
+        transition: border-color 0.2s, box-shadow 0.2s !important;
+      }
+      input:focus, select:focus {
+        border-color: var(--purple-primary) !important;
+        box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2) !important;
+        outline: none !important;
+      }
+      /* Buttons */
+      button, .btn {
+        transition: all 0.2s ease-in-out !important;
+      }
+      .bg-blue-700, .bg-primary-600, .dark\:bg-primary-600 {
+        background-color: var(--purple-primary) !important;
+        color: #ffffff !important;
+      }
+      .bg-blue-700:hover, .bg-primary-600:hover, .dark\:bg-primary-600:hover {
+        background-color: var(--purple-hover) !important;
+      }
+    </style>
+  </head>
+
+  <body class="bg-gray-900 border-gray-200 dark:bg-gray-900">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.js"></script>
+
+    <!-- Start Top Bar -->
+
+
+    
+    <!-- End Top Bar -->
+    {% block website %}
+    {% load static %}
+    {% endblock %}
+
+  </body>
+</html>

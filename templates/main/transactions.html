@@ -1,0 +1,101 @@
+{% extends 'main/dashboardbase.html' %}
+
+{% block dashboard %}
+<div class="space-y-6">
+  <div class="flex flex-col rounded-xl bg-slate-900 border border-slate-800 overflow-hidden w-full shadow-lg">
+    <div class="px-6 py-4 flex justify-between items-center border-b border-slate-800 bg-slate-950">
+      <h5 class="text-sm font-bold tracking-wider uppercase text-slate-300 flex items-center">
+          <i class="fa-solid fa-receipt text-purple-400 me-2"></i>
+          Transaction Ledger
+      </h5>
+    </div>
+    
+    <div class="flex-grow p-6 overflow-x-auto hide-scrollbar">
+      <div class="h-full overflow-y-auto hide-scrollbar rounded-lg border border-slate-800">
+        <table class="w-full text-sm text-left">
+          <thead class="text-xs text-slate-400 uppercase bg-slate-950">
+            <tr>
+              <th class="px-6 py-3">Timestamp</th>
+              <th class="px-6 py-3">Ticker</th>
+              <th class="px-6 py-3">Type</th>
+              <th class="px-6 py-3 text-right">Shares</th>
+              <th class="px-6 py-3 text-right">Execution Price</th>
+              <th class="px-6 py-3 text-right">Total Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for txn in transactions %}
+            <tr class="hover:bg-slate-800/40 transition duration-150 border-b border-slate-800">
+              <td class="px-6 py-4 font-medium text-slate-300 whitespace-nowrap">
+                {{ txn.timestamp|date:"Y-m-d H:i:s" }}
+              </td>
+              <td class="px-6 py-4 font-semibold text-white">
+                {{ txn.symbol }}
+              </td>
+              <td class="px-6 py-4">
+                {% if txn.action == 'BUY' %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-950/40 text-emerald-400 border border-emerald-800/55">
+                    <i class="fa-solid fa-arrow-trend-up me-1"></i>BUY
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-950/40 text-rose-400 border border-rose-800/55">
+                    <i class="fa-solid fa-arrow-trend-down me-1"></i>SELL
+                  </span>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 text-right text-slate-200">
+                {{ txn.quantity }}
+              </td>
+              <td class="px-6 py-4 text-right text-slate-200">
+                ${{ txn.price|floatformat:2 }}
+              </td>
+              <td class="px-6 py-4 text-right font-bold text-slate-100">
+                ${{ txn.total_amount|floatformat:2 }}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="px-6 py-8 text-center text-slate-500">
+                <i class="fa-solid fa-folder-open text-2xl mb-2 block"></i>
+                No transaction records available.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Pagination Controls -->
+    {% if transactions.paginator.num_pages > 1 %}
+    <div class="flex flex-col items-center py-4 border-t border-slate-800 bg-slate-950">
+      <span class="text-xs text-slate-400">
+        Showing <span class="font-semibold text-white">{{ transactions.start_index }}</span> to <span class="font-semibold text-white">{{ transactions.end_index }}</span> of <span class="font-semibold text-white">{{ transactions.paginator.count }}</span> entries
+      </span>
+      <div class="inline-flex mt-3 space-x-1.5">
+        {% if transactions.has_previous %}
+          <a href="?page={{ transactions.previous_page_number }}" class="flex items-center justify-center px-3 py-2 text-xs font-semibold text-white bg-purple-600 rounded-md hover:bg-purple-700 transition">
+            <i class="fa-solid fa-chevron-left me-1"></i>Prev
+          </a>
+        {% else %}
+          <button disabled class="flex items-center justify-center px-3 py-2 text-xs font-semibold text-slate-500 bg-slate-800 rounded-md cursor-not-allowed border border-slate-700">
+            <i class="fa-solid fa-chevron-left me-1"></i>Prev
+          </button>
+        {% endif %}
+        
+        {% if transactions.has_next %}
+          <a href="?page={{ transactions.next_page_number }}" class="flex items-center justify-center px-3 py-2 text-xs font-semibold text-white bg-purple-600 rounded-md hover:bg-purple-700 transition">
+            Next<i class="fa-solid fa-chevron-right ms-1"></i>
+          </a>
+        {% else %}
+          <button disabled class="flex items-center justify-center px-3 py-2 text-xs font-semibold text-slate-500 bg-slate-800 rounded-md cursor-not-allowed border border-slate-700">
+            Next<i class="fa-solid fa-chevron-right ms-1"></i>
+          </button>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

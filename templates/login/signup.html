@@ -1,0 +1,105 @@
+{% extends 'login/loginBase.html' %}
+
+{% block website %}
+<div class="min-h-[85vh] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        <h2 class="text-center text-4xl font-extrabold tracking-tight text-white mb-2">
+            Create Your Account
+        </h2>
+        <p class="text-center text-sm text-slate-400">
+            Join StockPulse and start building your virtual portfolio today.
+        </p>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
+        <div class="bg-slate-800 py-8 px-4 border border-slate-700 shadow-xl rounded-xl sm:px-10">
+            <form class="space-y-5" action="{% url 'createuser' %}" method="POST">
+                {% csrf_token %}
+                
+                <div>
+                    <label for="username" class="block text-sm font-medium text-slate-300 mb-2">
+                        Username
+                    </label>
+                    <div class="{{isusername}} flex items-center p-3 mb-4 text-sm text-red-400 rounded-lg bg-red-950/50 border border-red-800" role="alert">
+                        <i class="fa-solid fa-circle-exclamation me-2"></i>
+                        <span>Username already exists.</span>
+                    </div>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 ps-3 flex items-center pointer-events-none text-slate-500">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <input type="text" name="username" id="username" required
+                            class="block w-full ps-10 sm:text-sm bg-slate-900 border-slate-700 rounded-lg text-white"
+                            placeholder="username">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="firstName" class="block text-sm font-medium text-slate-300 mb-2">
+                            First Name
+                        </label>
+                        <input type="text" name="first_name" id="firstName" required
+                            class="block w-full sm:text-sm bg-slate-900 border-slate-700 rounded-lg text-white"
+                            placeholder="John">
+                    </div>
+                    <div>
+                        <label for="lastName" class="block text-sm font-medium text-slate-300 mb-2">
+                            Last Name
+                        </label>
+                        <input type="text" name="last_name" id="lastName" required
+                            class="block w-full sm:text-sm bg-slate-900 border-slate-700 rounded-lg text-white"
+                            placeholder="Doe">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="email" class="block text-sm font-medium text-slate-300 mb-2">
+                        Email Address
+                    </label>
+                    <div class="{{isemail}} flex items-center p-3 mb-4 text-sm text-red-400 rounded-lg bg-red-950/50 border border-red-800" role="alert">
+                        <i class="fa-solid fa-circle-exclamation me-2"></i>
+                        <span>Email address already registered.</span>
+                    </div>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 ps-3 flex items-center pointer-events-none text-slate-500">
+                            <i class="fa-solid fa-envelope"></i>
+                        </div>
+                        <input type="email" name="email" id="email" required
+                            class="block w-full ps-10 sm:text-sm bg-slate-900 border-slate-700 rounded-lg text-white"
+                            placeholder="you@example.com">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-slate-300 mb-2">
+                        Password
+                    </label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 ps-3 flex items-center pointer-events-none text-slate-500">
+                            <i class="fa-solid fa-lock"></i>
+                        </div>
+                        <input type="password" name="password" id="password" required
+                            class="block w-full ps-10 sm:text-sm bg-slate-900 border-slate-700 rounded-lg text-white"
+                            placeholder="••••••••">
+                    </div>
+                </div>
+
+                <div>
+                    <button type="submit"
+                        class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 transition duration-150">
+                        Create Account
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-6 text-center text-sm">
+                <span class="text-slate-400">Already registered?</span>
+                <a href="/login" class="font-medium text-cyan-400 hover:text-cyan-300 ms-1 transition duration-150">
+                    Sign In
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

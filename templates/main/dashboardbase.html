@@ -1,0 +1,334 @@
+{% extends 'main/base.html' %}
+
+{% block website %}
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Hide sidebar/navbar if embedded via iframe parameter
+        if (window.location.search.includes('embed=true')) {
+            const sidebar = document.getElementById('logo-sidebar');
+            const navbar = document.querySelector('nav');
+            const mainContent = document.querySelector('.sm\:ml-64');
+            if (sidebar) sidebar.style.display = 'none';
+            if (navbar) navbar.style.display = 'none';
+            if (mainContent) {
+                mainContent.classList.remove('sm:ml-64');
+                mainContent.style.marginLeft = '0';
+                mainContent.style.padding = '0';
+            }
+            const form = document.getElementById('updatestocksform');
+            if (form) {
+                form.setAttribute('target', '_top');
+            }
+        }
+
+        const searchInput = document.getElementById('search-navbar2');
+        const searchResults = document.getElementById('search-results');
+        let timeoutId;
+
+        searchInput.addEventListener('keyup', (event) => {
+            clearTimeout(timeoutId); // Clear previous timeout
+
+            timeoutId = setTimeout(async () => {
+                const query = event.target.value.trim();
+
+                if (query.length > 0) {
+                    let response = await fetch(`/api/search/${query}`);
+                    const data = await response.json();
+
+                    searchResults.innerHTML = ''; // Clear old results
+
+                    for (let i = 0; i < data.stocks.length; i++) {
+                        const stock = data.stocks[i];
+
+                        const resultItem = document.createElement('li');
+                        resultItem.classList.add(
+                            'block', 'px-4', 'py-2', 'text-sm', 'text-gray-700',
+                            'hover:bg-gray-100', 'dark:hover:bg-gray-600',
+                            'dark:text-gray-200', 'dark:hover:text-white'
+                        );
+
+                        const link = document.createElement('a');
+                        link.href = "/details/" + stock.symbol;
+                        link.textContent = stock.symbol + ' ' + stock.shortname;
+
+                        resultItem.appendChild(link);
+                        searchResults.appendChild(resultItem);
+                    }
+                } else {
+                    searchResults.innerHTML = '';
+                }
+            }, 200); // Reduced delay from 430ms to 120ms
+        });
+    });
+</script>
+
+
+<script>
+    function fetchData() {
+        fetch(`/api/incomecalculate`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(data);
+
+                const profitloss = document.getElementById("profitloss");
+                if (!profitloss) return;
+
+                const value = Number(data); // Make sure it's a number
+
+                if (value > 0) {
+                    profitloss.style.setProperty('color', 'var(--green-profit)', 'important');
+                    profitloss.innerHTML = "+&#36; " + value.toFixed(2);
+                } else if (value < 0) {
+                    profitloss.style.setProperty('color', 'var(--red-loss)', 'important');
+                    profitloss.innerHTML = "-&#36; " + Math.abs(value).toFixed(2);
+                } else {
+                    profitloss.style.setProperty('color', '#cbd5e1', 'important');
+                    profitloss.innerHTML = "&#36; 0.00";
+                }
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+            });
+    }
+
+    // Initial call
+    fetchData();
+
+    // Re-run every 2 seconds
+    setInterval(fetchData, 2000);
+</script>
+
+
+
+<div class="flex dark:bg-gray-800">
+    <button data-drawer-target="logo-sidebar" data-drawer-toggle="logo-sidebar" aria-controls="logo-sidebar"
+        type="button"
+        class="inline-flex items-center p-2 mt-2 ms-3 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
+        <span class="sr-only">Open sidebar</span>
+        <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20"
+            xmlns="http://www.w3.org/2000/svg">
+            <path clip-rule="evenodd" fill-rule="evenodd"
+                d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z">
+            </path>
+        </svg>
+    </button>
+    <div class="items-center justify-between md:hidden w-64 mx-auto md:flex md:w-auto md:order-2" id="navbar-search">
+        <div class="relative mt-3">
+            <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
+                </svg>
+            </div>
+            <input type="text" id="search-navbar"
+                class="block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                placeholder="Search...">
+        </div>
+    </div>
+    <div class="flex items-center md:order-2 md:hidden space-x-3 md:space-x-0 rtl:space-x-reverse pt-2">
+        <button type="button"
+            class="flex text-sm bg-gray-800 rounded-full md:me-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
+            id="user-menu-button" aria-expanded="false" data-dropdown-toggle="mduser-dropdown"
+            data-dropdown-placement="bottom">
+            <span class="sr-only">Open user menu</span>
+            <img class="w-8 h-8 rounded-full" src="https://www.flowbite.com/docs/images/people/profile-picture-3.jpg"
+                alt="user photo">
+        </button>
+        <!-- Dropdown menu -->
+        <div class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-lg shadow dark:bg-gray-700 dark:divide-gray-600"
+            id="mduser-dropdown">
+            <div class="px-4 py-3">
+                <span class="block text-sm text-gray-900 dark:text-white">Hello, {{name}}</span>
+                <span class="block text-sm  text-gray-500 truncate dark:text-gray-400">{{email}}</span>
+            </div>
+            <ul class="py-2" aria-labelledby="user-menu-button">
+                <li>
+                    <a href="#"
+                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Dashboard</a>
+                </li>
+                <li>
+                    <a href="#"
+                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Settings</a>
+                </li>
+                <li>
+                    <a href="#"
+                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Earnings</a>
+                </li>
+                <li>
+                    <a href="#"
+                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Sign
+                        out</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+
+<aside id="logo-sidebar"
+    class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0 border-r border-slate-800"
+    aria-label="Sidebar">
+    <div class="h-full px-4 py-5 overflow-y-auto bg-slate-950 flex flex-col justify-between">
+        <div>
+            <a href="/dashboard" class="flex items-center ps-2 mb-6">
+                <i class="fa-solid fa-chart-line text-2xl me-2" style="color: var(--purple-primary);"></i>
+                <span class="self-center text-xl font-bold tracking-tight text-white">
+                    StockPulse
+                </span>
+            </a>
+
+            <!-- User Balance Status Card -->
+            <div class="mb-4 p-4 bg-slate-900 border border-slate-800 rounded-xl shadow-sm">
+                <h6 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1 flex items-center">
+                    <i class="fa-solid fa-wallet me-2 text-purple-400"></i>
+                    Balance
+                </h6>
+                <p class="text-2xl font-bold text-white">&#36; {{totalbalance}}</p>
+            </div>
+
+            <!-- Profit Loss Panel -->
+            <div class="mb-4 p-4 bg-slate-900 border border-slate-800 rounded-xl shadow-sm">
+                <h6 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1 flex items-center">
+                    <i class="fa-solid fa-arrow-trend-up me-2 text-cyan-400"></i>
+                    Profit / Loss
+                </h6>
+                <p id="profitloss" class="text-2xl font-bold text-slate-300">&#36; calculating </p>
+            </div>
+
+            <!-- Market Status Panel -->
+            <div class="{{marketstatusclass}} mb-4 p-4 bg-slate-900 border border-slate-800 rounded-xl shadow-sm">
+                <h6 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1 flex items-center">
+                    <i class="fa-solid fa-clock me-2 text-slate-400"></i>
+                    Market Status
+                </h6>
+                <p class="text-sm font-semibold text-slate-300" id="marketstatus">Loading...</p>
+            </div>
+
+            <!-- Holdings Panel -->
+            <div class="{{currentlyholding}} mb-4 p-4 bg-slate-900 border border-slate-800 rounded-xl shadow-sm">
+                <h6 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1 flex items-center">
+                    <i class="fa-solid fa-briefcase me-2 text-slate-400"></i>
+                    Holdings
+                </h6>
+                <p class="text-sm font-semibold text-slate-300" id="currentlyholding"></p>
+            </div>
+
+            <!-- Navigation Links -->
+            <ul class="space-y-1.5 font-medium mt-6">
+                <li>
+                    <a href="/dashboard"
+                        class="flex items-center p-3 text-slate-300 rounded-lg hover:bg-slate-800 hover:text-white transition duration-150 group">
+                        <i class="fa-solid fa-gauge text-slate-400 group-hover:text-white text-lg me-3 transition duration-150"></i>
+                        <span class="text-sm font-medium">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/portfolio"
+                        class="flex items-center p-3 text-slate-300 rounded-lg hover:bg-slate-800 hover:text-white transition duration-150 group">
+                        <i class="fa-solid fa-chart-pie text-slate-400 group-hover:text-white text-lg me-3 transition duration-150"></i>
+                        <span class="text-sm font-medium flex-1">Portfolio</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'transaction_history' %}"
+                        class="flex items-center p-3 text-slate-300 rounded-lg hover:bg-slate-800 hover:text-white transition duration-150 group">
+                        <i class="fa-solid fa-receipt text-slate-400 group-hover:text-white text-lg me-3 transition duration-150"></i>
+                        <span class="text-sm font-medium">Transactions</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'settings' %}"
+                        class="flex items-center p-3 text-slate-300 rounded-lg hover:bg-slate-800 hover:text-white transition duration-150 group">
+                        <i class="fa-solid fa-sliders text-slate-400 group-hover:text-white text-lg me-3 transition duration-150"></i>
+                        <span class="text-sm font-medium">Settings</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <div>
+            <ul class="border-t border-slate-800 pt-4">
+                <li>
+                    <a href="{% url 'logout' %}"
+                        class="flex items-center p-3 text-slate-400 hover:text-red-400 rounded-lg hover:bg-red-950/20 transition duration-150 group">
+                        <i class="fa-solid fa-right-from-bracket group-hover:text-red-400 text-lg me-3 transition duration-150"></i>
+                        <span class="text-sm font-medium">Log Out</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</aside>
+
+<div class="sm:ml-64 min-h-screen flex flex-col bg-slate-950">
+    <nav class="bg-slate-900 border-b border-slate-800 hidden md:block">
+        <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto px-6 py-3">
+            <div class="flex-auto">
+                <div class="relative hidden md:block w-96">
+                    <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none text-slate-500">
+                        <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                    </div>
+                    <input type="text" id="search-navbar2"
+                        class="block w-full p-2 ps-10 text-sm text-white border border-slate-800 rounded-lg bg-slate-950 focus:ring-cyan-500 focus:border-cyan-500"
+                        aria-expanded="false" data-dropdown-toggle="search-results" data-dropdown-placement="bottom"
+                        placeholder="Search stock symbols (e.g. AAPL)...">
+                    <div class="dropdown-content hidden z-50 my-4 text-base list-none bg-slate-800 divide-y divide-slate-700 rounded-lg shadow-lg"
+                        id="search-results" style="position: absolute; top: calc(100% + 10px); left: 0; width: 100%;">
+                        <ul class="py-2" aria-labelledby="search-navbar2">
+                            <!-- Search results will be populated dynamically here -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center md:order-2 space-x-4">
+                <button type="button"
+                    class="flex text-sm bg-slate-800 rounded-full focus:ring-4 focus:ring-slate-700 transition duration-150"
+                    id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown"
+                    data-dropdown-placement="bottom">
+                    <span class="sr-only">Open user menu</span>
+                    <img class="w-8 h-8 rounded-full border border-slate-700"
+                        src="https://www.flowbite.com/docs/images/people/profile-picture-3.jpg" alt="user photo">
+                </button>
+                <!-- Dropdown menu -->
+                <div class="z-50 hidden my-4 text-base list-none bg-slate-850 divide-y divide-slate-750 rounded-lg shadow-lg border border-slate-700"
+                    id="user-dropdown">
+                    <div class="px-4 py-3">
+                        <span class="block text-sm text-white font-semibold">Hello, {{name}}</span>
+                        <span class="block text-xs text-slate-400 truncate mt-0.5">{{email}}</span>
+                    </div>
+                    <ul class="py-1.5" aria-labelledby="user-menu-button">
+                        <li>
+                            <a href="/dashboard"
+                                class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition duration-150">Dashboard</a>
+                        </li>
+                        <li>
+                            <a href="/settings"
+                                class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition duration-150">Settings</a>
+                        </li>
+                        <li>
+                            <a href="/logout"
+                                class="block px-4 py-2 text-sm text-red-400 hover:bg-red-950/30 hover:text-red-300 transition duration-150">Sign out</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="p-6 flex-1 bg-slate-950">
+        {% block dashboard %}
+        {% endblock %}
+    </div>
+</div>
+
+
+
+{% endblock %}

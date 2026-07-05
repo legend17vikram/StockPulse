@@ -188,6 +188,7 @@
                     var stockData = data.stocks[0];
                     var currentPrice = stockData[1];
                     var changeper = stockData[2];
+                    var marketState = stockData[4];
 
                     if (currentPriceElement) {
                         currentPriceElement.textContent = "Current Price: $" + parseFloat(currentPrice).toFixed(2);
@@ -204,6 +205,10 @@
                             changepercentage.classList.add('text-rose-500', 'bg-rose-950/20');
                             changepercentage.innerHTML = `<i class="fa-solid fa-arrow-trend-down me-1"></i>${changeper}%`;
                         }
+                    }
+                    var marketstatusEl = document.getElementById('marketstatus');
+                    if (marketstatusEl && marketState) {
+                        marketstatusEl.textContent = marketState;
                     }
                 }
             })
@@ -291,6 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     currentPriceInput.value = currentStockPrice;
 
                     const changeper = stocks[0][2];
+                    const marketState = stocks[0][4];
                     changePercentage.classList.remove('text-emerald-400', 'bg-emerald-950/20', 'text-rose-500', 'bg-rose-950/20');
                     if (changeper > 0) {
                         changePercentage.classList.add('text-emerald-400', 'bg-emerald-950/20');
@@ -298,6 +304,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         changePercentage.classList.add('text-rose-500', 'bg-rose-950/20');
                         changePercentage.innerHTML = `<i class="fa-solid fa-arrow-trend-down me-1"></i>${changeper}%`;
+                    }
+
+                    const marketstatusEl = document.getElementById('marketstatus');
+                    if (marketstatusEl && marketState) {
+                        marketstatusEl.textContent = marketState;
                     }
 
                     updateEstimatedCost();

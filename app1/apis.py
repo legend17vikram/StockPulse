@@ -4,7 +4,10 @@
 import time
 import traceback
 import requests
+import urllib3
 from datetime import datetime
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from django.http import JsonResponse, HttpResponse
 from .models import users
 from .mdate import getdate, today
@@ -25,7 +28,7 @@ def search(request, query):
     }
 
     try:
-        response = requests.get(url, headers=headers, timeout=2)  # ⏱ Increased timeout to 2
+        response = requests.get(url, headers=headers, timeout=2, verify=False)  # ⏱ Increased timeout to 2
         response.raise_for_status()
         data = response.json()
     except (requests.RequestException, ValueError, JSONDecodeError) as e:
@@ -50,7 +53,7 @@ def get_yahoo_cookie_and_crumb():
         return _yahoo_cookie, _yahoo_crumb
 
     # Step 1: Get cookie
-    response_step1 = requests.get("https://fc.yahoo.com")
+    response_step1 = requests.get("https://fc.yahoo.com", verify=False)
     cookie = response_step1.headers.get('Set-Cookie')
 
     # Step 2: Get crumb using that cookie
@@ -58,7 +61,7 @@ def get_yahoo_cookie_and_crumb():
         "User-Agent": "Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
         "Cookie": cookie
     }
-    response_step2 = requests.get("https://query2.finance.yahoo.com/v1/test/getcrumb", headers=headers_step2)
+    response_step2 = requests.get("https://query2.finance.yahoo.com/v1/test/getcrumb", headers=headers_step2, verify=False)
     crumb = response_step2.text.strip()
 
     # Cache it
@@ -83,7 +86,7 @@ def fetch_yahoo_quotes(symbols):
     }
 
     try:
-        response = requests.get(url, headers=headers, timeout=5)
+        response = requests.get(url, headers=headers, timeout=5, verify=False)
         response.raise_for_status()
         data = response.json()
     except (requests.RequestException, ValueError, JSONDecodeError) as e:
@@ -124,7 +127,7 @@ def fetchdetails(request, query):
     }
     store = {}
     try:
-        response = requests.get(url, headers=headers, timeout=5)
+        response = requests.get(url, headers=headers, timeout=5, verify=False)
         response.raise_for_status()
         data = response.json()
         
@@ -153,7 +156,7 @@ def graphdata(request, query, start, end):
     }
 
     try:
-        response = requests.get(url, headers=headers, timeout=5)
+        response = requests.get(url, headers=headers, timeout=5, verify=False)
         response.raise_for_status()
         data = response.json()
 

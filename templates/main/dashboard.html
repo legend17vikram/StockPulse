@@ -327,6 +327,17 @@ function renderChart(symbol, data) {
             
 
             const data = await response.json();
+            if (!data.stocks || data.stocks.length === 0) {
+                stocksTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="px-6 py-10 text-center text-slate-500 text-xs font-semibold">
+                            <i class="fa-solid fa-folder-open text-xl mb-1.5 block text-slate-600"></i>
+                            Watchlist is empty.<br>Search above to add stocks!
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
             stocksTableBody.innerHTML = data.stocks.map(stock => {
                 const [symbol, price, change] = stock;
                 const isActive = selectedSymbol === symbol;

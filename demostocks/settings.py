@@ -40,6 +40,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-)^2xuf0e-z@fv9(lq(vqn
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com', 'https://stockpulse-bzzm.onrender.com']
 
 
 # Application definition

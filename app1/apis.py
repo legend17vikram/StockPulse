@@ -301,7 +301,7 @@ def income(request):
         total_income = 0.0
         for symbol in symbols:
             if symbol not in symbol_price_map:
-                print(f"⚠️ Missing data for symbol: {symbol}")
+                print(f"[WARNING] Missing data for symbol: {symbol}")
                 continue
 
             avg_price = stocks[symbol].get("averageprice", 0.0)
@@ -314,7 +314,7 @@ def income(request):
         return HttpResponse(round(total_income, 2))
     
     except Exception as e:
-        print("❌ Error calculating income:", e)
+        print("[ERROR] Error calculating income:", e)
         return HttpResponse(0)
 
 def holdings(request, query):

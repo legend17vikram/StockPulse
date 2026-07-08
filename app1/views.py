@@ -200,14 +200,35 @@ def removewatchlist(request, symbol):
 
 def updatestocks(request):
     if request.method == "POST":
-        quantity = int(request.POST.get("quantity-input"))
+        quantity = int(request.POST.get("quantity-input") or 0)
         name = request.POST.get("symbolname")
-        currentprice = float(request.POST.get("currentprice"))
+        currentprice_raw = request.POST.get("currentprice")
+        
+        if currentprice_raw:
+            try:
+                currentprice = float(currentprice_raw)
+            except ValueError:
+                currentprice = 0.0
+        else:
+            currentprice = 0.0
+
+        if currentprice <= 0.0 and name:
+            from app1.apis import fetch_yahoo_quotes
+            quotes = fetch_yahoo_quotes(name)
+            if quotes and len(quotes) > 0:
+                currentprice = float(quotes[0].get("price", 0.0))
+
         user = request.user
 
         if "buy" in request.POST:
             if quantity == 0 or currentprice * quantity > user.balance:
                 return render(request, "main/error.html")
+
+            # Add to watchlist automatically
+            watchlist_symbols = user.watchlist.get("symbol", [])
+            if name not in watchlist_symbols:
+                watchlist_symbols.append(name)
+                user.watchlist["symbol"] = watchlist_symbols
 
             if name in user.stockbuy:
                 previousprice = user.stockbuy[name]["quantity"] * user.stockbuy[name]["boughtat"]

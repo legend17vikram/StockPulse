@@ -89,11 +89,11 @@ def fetch_yahoo_quotes(symbols):
         response = requests.get(url, headers=headers, timeout=5, verify=False)
         response.raise_for_status()
         data = response.json()
+        results = data.get("quoteResponse", {}).get("result", [])
     except (requests.RequestException, ValueError, JSONDecodeError) as e:
         print(f"Yahoo fetch exception: {e}")
-        return []
+        results = []
 
-    results = data.get("quoteResponse", {}).get("result", [])
     stocks = []
     for item in results:
         stocks.append({
@@ -102,6 +102,33 @@ def fetch_yahoo_quotes(symbols):
             "change_percent": round(item.get("regularMarketChangePercent", 0), 5),
             "market_state": item.get("marketState"),
         })
+
+    # Fallback to Finnhub if Yahoo Finance fails or returns empty lists
+    if not stocks and symbols:
+        print(f"[INFO] Yahoo Finance returned no quotes for symbols {symbols}. Falling back to Finnhub.")
+        import os
+        import finnhub
+        finnhub_api_key = os.environ.get("FINNHUB_API_KEY")
+        if not finnhub_api_key or finnhub_api_key == "your_finnhub_api_key_here":
+            finnhub_api_key = "d1of599r01qjadrjodh0d1of599r01qjadrjodhg"
+        client = finnhub.Client(api_key=finnhub_api_key)
+        
+        for symbol in symbols.split(","):
+            if not symbol:
+                continue
+            try:
+                quote = client.quote(symbol.upper())
+                current_price = quote.get("c", 0.0)
+                if current_price > 0.0:
+                    stocks.append({
+                        "symbol": symbol.upper(),
+                        "price": round(current_price, 2),
+                        "change_percent": round(quote.get("dp", 0.0), 5),
+                        "market_state": "REGULAR",
+                    })
+            except Exception as fe:
+                print(f"[ERROR] Finnhub fallback failed for {symbol}: {fe}")
+
     return stocks
 
 

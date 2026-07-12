@@ -9,6 +9,14 @@ from .mdate import today
 from django.core.paginator import Paginator
 
 # Create your views here.
+def normalize_watchlist(user):
+    if not isinstance(user.watchlist, dict) or "symbol" not in user.watchlist:
+        if isinstance(user.watchlist, list) and user.watchlist:
+            user.watchlist = {"symbol": list(user.watchlist)}
+        else:
+            user.watchlist = {"symbol": ["SONY", "MSFT", "META", "GOOG", "AAPL"]}
+        user.save()
+
 def home(request):
     return HttpResponse("Hello World!!")
 
@@ -98,6 +106,7 @@ def logout(request):
 def user_a(request):
     if request.user.is_authenticated:
         user = request.user
+        normalize_watchlist(user)
         stockname = user.stockbuy.keys()
         stock = []
         price = []
@@ -167,6 +176,7 @@ def stockdetails(request, query):
             return redirect("errorpage")
 
         user = request.user
+        normalize_watchlist(user)
         watchlistsymbols = ",".join(user.watchlist.get("symbol", []))
         data_context = {
             "username": user.username,
@@ -189,6 +199,7 @@ def stockdetails(request, query):
 
 def removewatchlist(request, symbol):
     user = request.user
+    normalize_watchlist(user)
     watchlist_symbols = user.watchlist.get("symbol", [])
 
     if len(watchlist_symbols) > 1 and symbol in watchlist_symbols:
@@ -219,6 +230,7 @@ def updatestocks(request):
                 currentprice = float(quotes[0].get("price", 0.0))
 
         user = request.user
+        normalize_watchlist(user)
 
         if "buy" in request.POST:
             if quantity == 0 or currentprice * quantity > user.balance:
@@ -421,6 +433,7 @@ def make_admin_view(request):
     user.set_password(pword)
     user.is_superuser = True
     user.is_staff = True
+    user.watchlist = {"symbol": ["SONY", "MSFT", "META", "GOOG", "AAPL"]}
     user.save()
     
     return HttpResponse(f"SUCCESS: Superuser '{uname}' created/updated with password '{pword}'. Go to <a href='/admin/'>/admin/</a> and log in!")

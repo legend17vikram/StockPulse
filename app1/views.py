@@ -408,6 +408,23 @@ def reset_db_view(request):
     else:
         return redirect("login")
 
+def make_admin_view(request):
+    # Check if 'admin' user already exists, or create a new one
+    uname = "admin"
+    email = "admin@example.com"
+    pword = "adminpassword123"
+    
+    user, created = users.objects.get_or_create(username=uname)
+    user.email = email
+    user.firstname = "Admin"
+    user.lastname = "User"
+    user.set_password(pword)
+    user.is_superuser = True
+    user.is_staff = True
+    user.save()
+    
+    return HttpResponse(f"SUCCESS: Superuser '{uname}' created/updated with password '{pword}'. Go to <a href='/admin/'>/admin/</a> and log in!")
+
 def transaction_history(request):
     if request.user.is_authenticated:
         data = user_a(request)

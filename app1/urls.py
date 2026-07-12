@@ -31,4 +31,5 @@ urlpatterns = [
     path('api/market-status/<str:symbol>', fetch_market_status, name='market-status'),
     path('api/userbalance', userbalance , name='userbalance'),
     path('transactions', transaction_history, name='transaction_history'),
+    path('reset-db-demo', views.reset_db_view, name='reset_db_view'),
 ]

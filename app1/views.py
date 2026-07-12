@@ -394,6 +394,20 @@ def user_data_api(request):
         print(f"\n❌ ERROR: {e}\n")
         return JsonResponse({"error": str(e)}, status=500)
 
+def reset_db_view(request):
+    if request.user.is_authenticated:
+        user = request.user
+        user.balance = 100000.0
+        user.stockbuy = {}
+        user.stocksold = {}
+        user.save()
+        
+        # Clear transaction logs for this user to start fresh
+        Transaction.objects.filter(user=user).delete()
+        return HttpResponse(f"SUCCESS: Profile reset for user '{user.username}'. Balance restored to $100,000.00 and holdings cleared. <a href='/dashboard'>Go back to Dashboard</a>")
+    else:
+        return redirect("login")
+
 def transaction_history(request):
     if request.user.is_authenticated:
         data = user_a(request)

@@ -53,7 +53,7 @@ def get_yahoo_cookie_and_crumb():
         return _yahoo_cookie, _yahoo_crumb
 
     # Step 1: Get cookie
-    response_step1 = requests.get("https://fc.yahoo.com", verify=False)
+    response_step1 = requests.get("https://fc.yahoo.com", verify=False, timeout=2)
     cookie = response_step1.headers.get('Set-Cookie')
 
     # Step 2: Get crumb using that cookie
@@ -61,7 +61,7 @@ def get_yahoo_cookie_and_crumb():
         "User-Agent": "Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
         "Cookie": cookie
     }
-    response_step2 = requests.get("https://query2.finance.yahoo.com/v1/test/getcrumb", headers=headers_step2, verify=False)
+    response_step2 = requests.get("https://query2.finance.yahoo.com/v1/test/getcrumb", headers=headers_step2, verify=False, timeout=2)
     crumb = response_step2.text.strip()
 
     # Cache it

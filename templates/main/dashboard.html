@@ -516,9 +516,25 @@ function renderChart(symbol, data) {
                 return response.json();
             })
             .then(data => {
+                const labels = data.name || [];
+                const series = data.price || [];
+
+                if (!series || series.length === 0) {
+                    const container = document.getElementById("donut-chart");
+                    if (container) {
+                        container.innerHTML = `
+                            <div class="text-slate-500 text-sm font-semibold flex flex-col items-center justify-center py-12">
+                                <i class="fa-solid fa-chart-pie text-3xl mb-2 text-slate-600"></i>
+                                <span>No allocations to display.</span>
+                            </div>
+                        `;
+                    }
+                    return;
+                }
+
                 const getChartOptions = () => {
                     return {
-                        series: data.price,
+                        series: series,
                         colors: ["#d97706", "#eab308", "#10b981", "#3b82f6", "#ec4899", "#6b7280"],
                         chart: {
                             height: 320,
@@ -569,7 +585,7 @@ function renderChart(symbol, data) {
                                 top: -2,
                             },
                         },
-                        labels: data.name,
+                        labels: labels,
                         dataLabels: {
                             enabled: false,
                         },

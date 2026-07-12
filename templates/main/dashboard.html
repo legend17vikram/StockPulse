@@ -379,8 +379,8 @@ function renderChart(symbol, data) {
         }
     }
 
-    // Call every 2 seconds
-    setInterval(updateWatchlist, 2000);
+    // Call every 15 seconds to avoid API rate limits
+    setInterval(updateWatchlist, 15000);
     // Initialization
     document.addEventListener('DOMContentLoaded', async () => {
         // Initialize DOM references
@@ -710,7 +710,7 @@ function renderChart(symbol, data) {
 
     document.addEventListener('DOMContentLoaded', function () {
         fetchAndRenderPortfolio();              // initial call immediately
-        setInterval(fetchAndRenderPortfolio, 1500); // repeat every 2 seconds
+        setInterval(fetchAndRenderPortfolio, 15000); // repeat every 15 seconds to avoid API rate limits
     });
 </script>
 

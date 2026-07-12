@@ -319,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     fetchUserBalance();
     fetchData();
-    setInterval(fetchData, 5000);
+    setInterval(fetchData, 20000); // repeat every 20 seconds to avoid API rate limits
 
     const quantityInput = document.getElementById('quantity-input');
     const incrementButton = document.getElementById('increment-button');

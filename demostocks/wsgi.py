@@ -20,8 +20,18 @@ try:
     from django.contrib.auth import get_user_model
     call_command('migrate', interactive=False)
     User = get_user_model()
-    if not User.objects.filter(username='admin').exists():
-        User.objects.create_superuser('admin', 'admin@example.com', 'Admin@12345')
+    u = User.objects.filter(username='admin').first()
+    if not u:
+        u = User(
+            username='admin',
+            email='admin@example.com',
+            firstname='Admin',
+            lastname='User',
+            is_superuser=True,
+            is_staff=True,
+            is_active=True
+        )
+    u.set_password('Admin@12345')
+    u.save()
 except Exception as e:
     print(f"Auto-migration error on startup: {e}")
-

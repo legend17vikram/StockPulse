@@ -1,1 +1,1 @@
-web: gunicorn demostocks.wsgi:application
+web: python manage.py migrate && python manage.py shell -c "from django.contrib.auth import get_user_model; User=get_user_model(); u=User.objects.filter(username='admin').first() or User(username='admin', email='admin@example.com', firstname='Admin', lastname='User', is_superuser=True, is_staff=True, is_active=True); u.set_password('Admin@12345'); u.save()" && gunicorn demostocks.wsgi:application
